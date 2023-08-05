@@ -14,6 +14,21 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::post('/register', 'App\Http\Controllers\AuthController@register');
+Route::post('/login', 'App\Http\Controllers\AuthController@login');
+
+// Article routes
+Route::get('/articles', 'App\Http\Controllers\ArticleController@index');
+Route::get('/articles/{id}', 'App\Http\Controllers\ArticleController@show');
+
+// Category routes
+Route::get('/categories', 'App\Http\Controllers\CategoryController@index');
+Route::get('/categories/{id}', 'App\Http\Controllers\CategoryController@show');
+
+// Source routes
+Route::get('/sources', 'App\Http\Controllers\SourceController@index');
+Route::get('/sources/{id}', 'App\Http\Controllers\SourceController@show');
+
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
