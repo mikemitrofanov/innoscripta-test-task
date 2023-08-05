@@ -1,0 +1,6 @@
+.fleet
+.idea
+.vscode
+.DS_Store
+/docker/mysql
+/docker/logs

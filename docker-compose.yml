@@ -1,0 +1,219 @@
+version: '3.8'
+
+networks:
+  app-network:
+    driver: bridge
+
+services:
+  nginx:
+    build:
+      context: ./docker
+      dockerfile: nginx.dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+        - USER=${USER:-laravel}
+    restart: unless-stopped
+    container_name: nginx
+    ports:
+      - 8000:8000
+    volumes:
+      - ./app-backend:/var/www/html
+      - ./app-backend/.env:/var/www/html/.env
+    depends_on:
+      - php
+      - redis
+      - mysql
+      - laravel-queue
+      - laravel-cron
+      - phpmyadmin
+      - mailhog
+    networks:
+      - app-network
+
+  php:
+    build:
+      context: ./docker
+      dockerfile: php.dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+        - USER=${USER:-laravel}
+    container_name: php
+    ports:
+      - ":9000"
+    volumes:
+      - ./app-backend:/var/www/html
+      - ./app-backend/.env:/var/www/html/.env
+    networks:
+      - app-network
+
+  mysql:
+    image: mariadb:10.6
+    container_name: mysql
+    restart: unless-stopped
+    tty: true
+    ports:
+      - 3307:3306
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - ./docker/mysql:/var/lib/mysql
+    networks:
+      - app-network
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - 6380:6379
+    networks:
+      - app-network
+
+  laravel-cron:
+    build:
+      context: ./docker
+      dockerfile: php.dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+        - USER=${USER:-laravel}
+    container_name: laravel-cron
+    volumes:
+      - ./app-backend:/var/www/html
+      - ./app-backend/.env:/var/www/html/.env
+    depends_on:
+      - mysql
+    working_dir: /var/www/html
+    entrypoint: ['php', '/var/www/html/artisan', 'schedule:work']
+    networks:
+      - app-network
+
+  laravel-queue:
+    build:
+      context: ./docker
+      dockerfile: php.dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+        - USER=${USER:-laravel}
+    container_name: laravel-queue
+    volumes:
+      - ./app-backend:/var/www/html
+      - ./app-backend/.env:/var/www/html/.env
+    depends_on:
+      - mysql
+    working_dir: /var/www/html
+    entrypoint: ['php', '/var/www/html/artisan', 'queue:work']
+    networks:
+      - app-network
+
+  phpmyadmin:
+    image: phpmyadmin:5.2.0
+    container_name: phpmyadmin
+    environment:
+      PMA_ARBITRARY: 1
+      PMA_HOST: ${DB_HOST}
+      PMA_USER: ${DB_USERNAME}
+      PMA_PASSWORD: ${DB_PASSWORD}
+      PMA_PORT: ${DB_PORT}
+    depends_on:
+      - mysql
+    ports:
+      - 8888:80
+    networks:
+      - app-network
+
+  laravel-migrate-seed:
+    build:
+      context: ./docker
+      dockerfile: php.dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+        - USER=${USER:-laravel}
+    container_name: laravel-migrate-seed
+    volumes:
+      - ./app-backend:/var/www/html
+      - ./app-backend/.env:/var/www/html/.env
+    depends_on:
+      - mysql
+    profiles: ["migrate-seed"]
+    working_dir: /var/www/html
+    entrypoint: ["/bin/sh","-c"]
+    command:
+      - |
+        php artisan migrate
+        php artisan db:seed
+    networks:
+      - app-network
+
+  composer:
+    build:
+      context: ./docker
+      dockerfile: composer.dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+        - USER=${USER:-laravel}
+    container_name: composer
+    volumes:
+      - ./app-backend:/var/www/html
+      - ./app-backend/.env:/var/www/html/.env
+    working_dir: /var/www/html
+    depends_on:
+      - php
+    user: ${USER:-laravel} #system user
+    profiles: ["composer"]
+    entrypoint: ['composer', '--ignore-platform-reqs']
+    networks:
+      - app-network
+
+  artisan:
+    build:
+      context: ./docker
+      dockerfile: php.dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+        - USER=${USER:-laravel}
+    container_name: artisan
+    volumes:
+      - ./app-backend:/var/www/html
+      - ./app-backend/.env:/var/www/html/.env
+    depends_on:
+      - mysql
+    working_dir: /var/www/html
+    profiles: ["artisan"]
+    entrypoint: ['php', '/var/www/html/artisan']
+    networks:
+      - app-network
+
+  react:
+    build:
+      context: ./docker
+      dockerfile: react.dockerfile
+    container_name: react
+    ports:
+      - 3000:3000
+    volumes:
+      - ./app-frontend:/var/www/frontend
+    networks:
+      - app-network
+
+  npm:
+    image: node:alpine
+    container_name: npm
+    volumes:
+      - ./app-frontend:/var/www/frontend
+    working_dir: /var/www/frontend
+    profiles: ["npm"]
+    entrypoint: ['npm']
+    networks:
+      - app-network
