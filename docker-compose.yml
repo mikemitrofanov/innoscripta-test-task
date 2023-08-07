@@ -27,7 +27,6 @@ services:
       - laravel-queue
       - laravel-cron
       - phpmyadmin
-      - mailhog
     networks:
       - app-network
 
@@ -41,7 +40,7 @@ services:
         - USER=${USER:-laravel}
     container_name: php
     ports:
-      - ":9000"
+      - 9000:9000
     volumes:
       - ./app-backend:/var/www/html
       - ./app-backend/.env:/var/www/html/.env
@@ -201,7 +200,7 @@ services:
       dockerfile: react.dockerfile
     container_name: react
     ports:
-      - 3000:3000
+      - 3001:3000
     volumes:
       - ./app-frontend:/var/www/frontend
     networks:
