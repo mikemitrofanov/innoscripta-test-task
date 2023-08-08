@@ -22,7 +22,6 @@ interface ArticleProps {
 export default function Article(props: ArticleProps) {
     const navigate = useNavigate();
     const { article } = props;
-    console.log(article, props);
 
     return (
         <Grid item xs={12} md={6}>

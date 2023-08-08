@@ -14,15 +14,19 @@ class ArticleController extends Controller
         $query = Article::select('id', 'title', 'short_description', 'content', 'author', 'published_at', 'image_url', 'base_url');
 
         // Sorting
-        if ($request->has('sort_by')) {
-            $sortField = $request->input('sort_by');
-            $sortOrder = $request->input('sort_dir', 'asc'); // Default to ascending if not specified
-            $query->orderBy($sortField, $sortOrder);
+//        if ($request->has('sort_by')) {
+//            $sortField = $request->input('sort_by');
+//            $sortOrder = $request->input('sort_dir', 'asc');
+//            $query->orderBy($sortField, $sortOrder);
+//        }
+
+        if ($request->has('search')) {
+            $query->where('content', 'like', '%' . $request->input('search') . '%');
         }
 
         // Filtering
         if ($request->has('source')) {
-            $query->where('source_name', $request->input('source'));
+            $query->where('source_id', $request->input('source'));
         }
 
         if ($request->has('category')) {

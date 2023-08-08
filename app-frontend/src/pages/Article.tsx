@@ -4,7 +4,10 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import Box from '@mui/material/Box';
-import {useGetArticleQuery} from "../store/apis/articles.ts";
+import {useDispatch, useSelector} from "react-redux";
+import {useEffect} from "react";
+import {getArticleRequest} from "../store/articles/actions.ts";
+import * as React from "react";
 
 interface ArticleInterface {
     content: string;
@@ -18,9 +21,12 @@ interface ArticleInterface {
 
 const Article = () => {
     const { articleId } = useParams();
-    const { isLoading, data } = useGetArticleQuery(articleId);
+    const dispatch = useDispatch();
+    const { loading, article } = useSelector(store => store.articles);
 
-    if (isLoading) return (<div>Loading</div>);
+    useEffect(() => { dispatch(getArticleRequest(articleId)) }, []);
+
+    if (loading || !article.id) return (<div>Loading</div>);
 
     return (
         <Paper
@@ -32,11 +38,11 @@ const Article = () => {
                 backgroundSize: 'cover',
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
-                backgroundImage: `url(${data.image_url})`,
+                backgroundImage: `url(${article.image_url})`,
             }}
         >
             {/* Increase the priority of the hero background image */}
-            {<img style={{ display: 'none' }} src={data.image_url} alt={''} />}
+            {<img style={{ display: 'none' }} src={article.image_url} alt={''} />}
             <Box
                 sx={{
                     position: 'absolute',
@@ -57,12 +63,12 @@ const Article = () => {
                         }}
                     >
                         <Typography component="h1" variant="h3" color="inherit" gutterBottom>
-                            {data.title}
+                            {article.title}
                         </Typography>
                         <Typography variant="h5" color="inherit" paragraph>
-                            {data.content}
+                            {article.content}
                         </Typography>
-                        <Link variant="subtitle1" href={data.base_url}>
+                        <Link variant="subtitle1" href={article.base_url}>
                             Read more...
                         </Link>
                     </Box>

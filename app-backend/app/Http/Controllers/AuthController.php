@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -10,41 +12,42 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required|string',
-        ]);
+        $data = $request->validated();
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            throw ValidationException::withMessages([
-                'email' => 'Invalid credentials',
-            ]);
+        $user = User::where('email', $data['email'])->first();
+
+        if (!$user || !Hash::check($data['password'], $user->password)) {
+            return response()->json([
+                'message' => 'Email or password is incorrect!'
+            ], 401);
         }
-
-        $user = $request->user();
         $token = $user->createToken('api_token')->plainTextToken;
 
-        return response()->json(['access_token' => $token]);
+        return response()->json([
+            'token' => $token,
+            'user' => $user
+        ]);
     }
 
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
-        ]);
+        $data = $request->validated();
 
         try {
-            User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => Hash::make($data['password']),
             ]);
+            $token = $user->createToken('api_token')->plainTextToken;
 
-            return response()->json(['message' => "You successfully registered"]);
+            return response()->json([
+                'message' => 'You successfully registered',
+                'token' => $token,
+                'user' => $user
+            ]);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Failed to register user.'], 500);
         }

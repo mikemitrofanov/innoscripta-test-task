@@ -1,9 +1,11 @@
 import * as React from 'react';
+import {useNavigate} from "react-router-dom";
 import Toolbar from '@mui/material/Toolbar';
 import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import SearchIcon from '@mui/icons-material/Search';
 import Typography from '@mui/material/Typography';
+import SearchInput from "./Search.tsx";
+import {useDispatch, useSelector} from "react-redux";
+import {logOut} from "../store/auth/actions.ts";
 
 interface HeaderProps {
     title: string;
@@ -11,12 +13,16 @@ interface HeaderProps {
 
 export default function Header(props: HeaderProps) {
     const { title } = props;
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const { user } = useSelector(store => store.auth);
+    const token = window.localStorage.getItem('token');
 
     return (
         <React.Fragment>
             <Toolbar sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                <Button size="small">Subscribe</Button>
                 <Typography
+                    onClick={() => navigate('/')}
                     component="h2"
                     variant="h5"
                     color="inherit"
@@ -26,12 +32,17 @@ export default function Header(props: HeaderProps) {
                 >
                     {title}
                 </Typography>
-                <IconButton>
-                    <SearchIcon />
-                </IconButton>
-                <Button variant="outlined" size="small">
-                    Sign up
-                </Button>
+                <SearchInput />
+
+                {!token ? (
+                    <Button variant="outlined" size="small" onClick={() => navigate('signup')}>
+                        Sign up
+                    </Button>
+                ) : (
+                    <Button variant="outlined" size="small" onClick={() => dispatch(logOut())}>
+                        Logout
+                    </Button>
+                )}
             </Toolbar>
         </React.Fragment>
     );

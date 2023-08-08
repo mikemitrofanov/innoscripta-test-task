@@ -29,7 +29,7 @@ Route::get('/categories/{id}', 'App\Http\Controllers\CategoryController@show');
 Route::get('/sources', 'App\Http\Controllers\SourceController@index');
 Route::get('/sources/{id}', 'App\Http\Controllers\SourceController@show');
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+Route::middleware('auth:sanctum')->get('/profile', function (Request $request) {
     return $request->user();
 });
 

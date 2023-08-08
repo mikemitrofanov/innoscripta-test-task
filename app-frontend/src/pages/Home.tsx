@@ -1,22 +1,13 @@
-import {Grid} from "@mui/material";
-import {useGetArticlesQuery} from "../store/apis/articles.ts";
-import Article from "../components/Article.tsx";
+import Filters from "../components/Filters.tsx";
+import * as React from "react";
+import Articles from "../components/Articles.tsx";
 
 const Home = () => {
-    const { data, isLoading } = useGetArticlesQuery();
-
-    if (isLoading) return (<div>Loading</div>)
-    const { data: articles } = data;
-    console.log('asdasd', articles);
-
     return (
         <>
             <main>
-                <Grid container spacing={4}>
-                    {articles.map((article: any) => (
-                        <Article key={article.id} article={article} />
-                    ))}
-                </Grid>
+                <Filters />
+                <Articles />
             </main>
         </>
     )
